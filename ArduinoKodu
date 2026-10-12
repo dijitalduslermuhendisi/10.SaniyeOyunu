@@ -1,0 +1,78 @@
+#include <Wire.h>
+#include <Adafruit_SSD1306.h>
+Adafruit_SSD1306 d(128,32,&Wire,-1);
+int s=0;unsigned long t0;float t,f;
+#define BTN D5
+#define BZ D6
+
+void S(int x,int y,int z,String c){d.setTextSize(z);
+d.setCursor(x,y);
+d.print(c);}
+
+void setup(){
+  pinMode(BTN,INPUT_PULLUP);
+  pinMode(BZ,OUTPUT);
+  Wire.begin(D2, D1);
+  d.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  d.setTextColor(1);
+}
+
+void loop(){
+  if(!digitalRead(BTN)){
+    delay(50); 
+    if(!digitalRead(BTN)){ 
+      if(s==0){t0=millis();s=1;tone(BZ,1000,100);}
+      else if(s==1){
+        t=(millis()-t0)/1000.0;s=2;f=t-10;
+        if(abs(f)<.005)
+        {
+          tone(BZ,2500,400);
+          delay(100);
+          tone(BZ,3000,400);
+          }
+        else if
+        (abs(f)<=.05)tone(BZ,1800,250);
+        else 
+        tone(BZ,150,500);
+      }
+      else s=0;
+      while(!digitalRead(BTN))
+      delay(10); 
+    }
+  }
+  
+  d.clearDisplay();
+  if(s==0){
+    S(15,2,1,"10.00s CHALLENGE");
+    S(8,18,1,"Baslamak icin tikla");
+  }
+  if(s==1){
+    S(10,12,1,"SURE:");
+    float c=(millis()-t0)/1000.0;
+    d.setTextSize(2);d.setCursor(50,8);
+    if(c<10)d.print("0");
+    d.print(c,2);
+  }
+  if(s==2){
+    d.setTextSize(2);d.setCursor(0,8);
+    if(t<10)
+    d.print("0");
+    d.print(t,2);
+    
+    if(abs(f)<.005){
+      S(70,4,1,"MUKEMMEL!");
+      S(70,16,1,"KAZANDIN!");
+    } else if(abs(f)<=.05){
+      S(70,4,1,"COK YAKIN");
+      d.setCursor(70,16);
+      d.print(f>0?"+":"");
+      d.print(f,2);
+    } else {
+      S(70,4,1,"KAYBETTIN");
+      d.setCursor(70,16);
+      d.print(f>0?"+":"");
+      d.print(f,2);
+    }
+  }
+  d.display();
+}
